@@ -32,8 +32,11 @@ void consumer_thread(so_consumer_ctx_t *ctx)
 
 		ring_buffer_dequeue(ctx->producer_rb, &packet, sizeof(packet));
 
-		// ctx->times[*ctx->idx] = packet.hdr.timestamp;
-		// (*ctx->idx)++;
+		pthread_mutex_lock(&ctx->file_mutex);
+		ctx->times[*ctx->idx] = packet.hdr.timestamp;
+		(*ctx->idx)++;
+		pthread_mutex_unlock(&ctx->file_mutex);
+
 
 		pthread_mutex_unlock(&ctx->mutex);
 
@@ -47,12 +50,14 @@ void consumer_thread(so_consumer_ctx_t *ctx)
 
 		pthread_mutex_lock(&ctx->file_mutex);
 
-		// while (timestamp != ctx->times[0])
-		// pthread_cond_wait(&ctx->cond, &ctx->file_mutex);
-		// for (unsigned long i = 0; i < (*ctx->idx) - 1; i++)
-		// ctx->times[i] = ctx->times[i + 1];
-		// (*ctx->idx)--;
+		while (timestamp != ctx->times[0])
+			pthread_cond_wait(&ctx->cond, &ctx->file_mutex);
 
+		for (unsigned long i = 0; i < (*ctx->idx) - 1; i++)
+			ctx->times[i] = ctx->times[i + 1];
+		(*ctx->idx)--;
+
+		pthread_cond_broadcast(&ctx->cond);
 		write(fd, out_buf, len);
 		pthread_mutex_unlock(&ctx->file_mutex);
 	}
@@ -75,14 +80,21 @@ int create_consumers(pthread_t *tids,
 
 	ctx->producer_rb = rb;
 	ctx->out_filename = out_filename; // salvăm numele fișierului în context
+	
 	pthread_mutex_init(&ctx->mutex, NULL);
 	pthread_cond_init(&ctx->cond, NULL);
 	pthread_mutex_init(&ctx->file_mutex, NULL);
+
 	ctx->producer_rb->stop = 0;
+	ctx->times = malloc(num_consumers * sizeof(unsigned long));
+	ctx->idx = calloc(1, sizeof(unsigned long));
 
 	for (int i = 0; i < num_consumers; i++) {
 		if (pthread_create(&tids[i], NULL, consumer_wrapper, ctx) != 0) {
 			perror("pthread_create");
+			// free(ctx->idx);
+			// free(ctx->times);
+			// free(ctx);
 			return -1;
 		}
 	}
