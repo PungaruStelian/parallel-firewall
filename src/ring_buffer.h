@@ -16,6 +16,8 @@ typedef struct so_ring_buffer_t {
 	size_t len;
 	size_t cap;
 
+    int stop;
+
 	/* TODO: Add syncronization primitives */
 	pthread_mutex_t mutex;
 	pthread_cond_t not_empty;

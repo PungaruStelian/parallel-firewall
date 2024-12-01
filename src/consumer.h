@@ -13,7 +13,7 @@ typedef struct so_consumer_ctx_t {
     /* TODO: add synchronization primitives for timestamp ordering */
 	pthread_mutex_t mutex;
 	pthread_cond_t cond;
-	int stop;
+	pthread_mutex_t file_mutex; // mutex for file writing synchronization
 } so_consumer_ctx_t;
 
 int create_consumers(pthread_t *tids,

@@ -22,10 +22,10 @@ void consumer_thread(so_consumer_ctx_t *ctx)
 
     while (1) {
         pthread_mutex_lock(&ctx->mutex);
-        while (ctx->producer_rb->len == 0 && !ctx->stop)
-            pthread_cond_wait(&ctx->cond, &ctx->mutex);
+        while (ctx->producer_rb->len == 0 && !ctx->producer_rb->stop)
+            pthread_cond_wait(&ctx->producer_rb->not_empty, &ctx->mutex);
 
-        if (ctx->stop && ctx->producer_rb->len == 0) {
+        if (ctx->producer_rb->stop && ctx->producer_rb->len == 0) {
             pthread_mutex_unlock(&ctx->mutex);
             break;
         }
@@ -40,7 +40,10 @@ void consumer_thread(so_consumer_ctx_t *ctx)
 
         len = snprintf(out_buf, PKT_SZ, "%s %016lx %lu\n",
             RES_TO_STR(action), hash, timestamp);
+
+        pthread_mutex_lock(&ctx->file_mutex);
         write(fd, out_buf, len);
+        pthread_mutex_unlock(&ctx->file_mutex);
     }
 
     close(fd);
@@ -62,7 +65,8 @@ int create_consumers(pthread_t *tids,
     ctx->out_filename = out_filename;  // salvăm numele fișierului în context
     pthread_mutex_init(&ctx->mutex, NULL);
     pthread_cond_init(&ctx->cond, NULL);
-    ctx->stop = 0;
+    pthread_mutex_init(&ctx->file_mutex, NULL);
+    ctx->producer_rb->stop = 0;
 
     for (int i = 0; i < num_consumers; i++) {
         if (pthread_create(&tids[i], NULL, consumer_wrapper, ctx) != 0) {
