@@ -9,7 +9,7 @@ int ring_buffer_init(so_ring_buffer_t *ring, size_t cap)
 	if (!ring->data)
 		return -1;
 
-    ring->stop = 0;
+	ring->stop = 0;
 	ring->read_pos = 0;
 	ring->write_pos = 0;
 	ring->len = 0;
@@ -63,7 +63,7 @@ void ring_buffer_destroy(so_ring_buffer_t *ring)
 
 void ring_buffer_stop(so_ring_buffer_t *ring)
 {
-    ring->stop = 1;
+	ring->stop = 1;
 	pthread_cond_broadcast(&ring->not_empty);
 	pthread_cond_broadcast(&ring->not_full);
 }
