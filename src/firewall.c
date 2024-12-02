@@ -13,13 +13,13 @@
 #include "packet.h"
 #include "utils.h"
 
-#define SO_RING_SZ		(PKT_SZ * 1000)
+#define SO_RING_SZ (PKT_SZ * 1000)
 
 pthread_mutex_t MUTEX_LOG;
 
 void log_lock(bool lock, void *udata)
 {
-	pthread_mutex_t *LOCK = (pthread_mutex_t *) udata;
+	pthread_mutex_t *LOCK = (pthread_mutex_t *)udata;
 
 	if (lock)
 		pthread_mutex_lock(LOCK);
@@ -77,4 +77,3 @@ int main(int argc, char **argv)
 
 	return 0;
 }
-

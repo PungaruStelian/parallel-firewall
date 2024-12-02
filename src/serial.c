@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
-
 #include "consumer.h"
 #include "packet.h"
 #include "utils.h"

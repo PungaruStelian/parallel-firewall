@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: BSD-3-Clause */
+// SPDX-License-Identifier: BSD-3-Clause
 
 #ifndef __SO_RINGBUFFER_H__
 #define __SO_RINGBUFFER_H__
@@ -7,7 +7,8 @@
 #include <string.h>
 #include <pthread.h>
 
-typedef struct so_ring_buffer_t {
+typedef struct so_ring_buffer_t
+{
 	// Pointer to the data buffer where the actual content is stored
 	// This buffer holds the data that is passed between producers and consumers
 	char *data;
@@ -53,7 +54,7 @@ typedef struct so_ring_buffer_t {
  *   - 0 on success (buffer initialized).
  *   - -1 if memory allocation for the buffer fails.
  */
-int     ring_buffer_init(so_ring_buffer_t *rb, size_t cap);
+int ring_buffer_init(so_ring_buffer_t *rb, size_t cap);
 
 /* Enqueues data into the ring buffer.
  * Arguments:
@@ -81,7 +82,7 @@ ssize_t ring_buffer_dequeue(so_ring_buffer_t *rb, void *data, size_t size);
  * Arguments:
  *   - ring: Pointer to the ring buffer to be destroyed.
  */
-void    ring_buffer_destroy(so_ring_buffer_t *rb);
+void ring_buffer_destroy(so_ring_buffer_t *rb);
 
 /* Stops the ring buffer and signals all threads waiting on conditions.
  * Arguments:
@@ -89,6 +90,6 @@ void    ring_buffer_destroy(so_ring_buffer_t *rb);
  * This function sets the `stop` flag to 1 and broadcasts to notify all waiting threads
  * that the buffer is being stopped, allowing them to terminate gracefully.
  */
-void    ring_buffer_stop(so_ring_buffer_t *rb);
+void ring_buffer_stop(so_ring_buffer_t *rb);
 
 #endif /* __SO_RINGBUFFER_H__ */
