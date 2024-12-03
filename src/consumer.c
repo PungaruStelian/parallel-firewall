@@ -8,7 +8,6 @@
 #include "packet.h"
 #include "utils.h"
 
-// Consumer thread function to process packets and write them in order to a file
 void consumer_thread(so_consumer_ctx_t *ctx)
 {
 	// Temporary storage for packet and output buffer
@@ -17,7 +16,7 @@ void consumer_thread(so_consumer_ctx_t *ctx)
 	int len;
 
 	// Open the output file for appending processed packets
-	int fd = open(ctx->out_filename, O_WRONLY | O_CREAT | O_APPEND, 0644);
+	int fd = open(ctx->out_filename, O_WRONLY | O_CREAT | O_APPEND, 0777);
 
 	if (fd < 0) {
 		perror("open");
@@ -51,7 +50,7 @@ void consumer_thread(so_consumer_ctx_t *ctx)
 		pthread_mutex_unlock(&ctx->mutex);
 
 		// Process the packet and prepare formatted output for writing
-		int action = process_packet(&packet);			// Process the packet data
+		so_action_t action = process_packet(&packet);	// Process the packet data
 		unsigned long hash = packet_hash(&packet);		// Generate a hash for the packet
 		unsigned long timestamp = packet.hdr.timestamp; // Extract the timestamp
 
@@ -85,14 +84,12 @@ void consumer_thread(so_consumer_ctx_t *ctx)
 	close(fd);
 }
 
-// Wrapper function to invoke the consumer thread
-static void *consumer_wrapper(void *arg)
+void *consumer_wrapper(void *arg)
 {
 	consumer_thread((so_consumer_ctx_t *)arg); // Call the actual consumer thread function
 	return NULL;
 }
 
-// Function to create multiple consumer threads
 int create_consumers(pthread_t *tids,
 					 int num_consumers,
 					 struct so_ring_buffer_t *rb,
@@ -108,14 +105,14 @@ int create_consumers(pthread_t *tids,
 	ctx->producer_rb = rb;			  // Set the producer's ring buffer
 	ctx->out_filename = out_filename; // Save the output filename for each consumer
 
-	// Initialize mutexes and condition variables for synchronization
-	pthread_mutex_init(&ctx->mutex, NULL);
-	pthread_cond_init(&ctx->cond, NULL);
-	pthread_mutex_init(&ctx->file_mutex, NULL);
-
 	// Initialize shared resources used for timestamp ordering
 	ctx->times = malloc(num_consumers * sizeof(unsigned long)); // Array to store timestamps
 	ctx->idx = calloc(1, sizeof(unsigned long));				// Index to track the current position
+
+    // Initialize mutexes and condition variables for synchronization
+	pthread_cond_init(&ctx->cond, NULL);
+	pthread_mutex_init(&ctx->mutex, NULL);
+	pthread_mutex_init(&ctx->file_mutex, NULL);
 
 	// Create the consumer threads
 	for (int i = 0; i < num_consumers; i++) {
